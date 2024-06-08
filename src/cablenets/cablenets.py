@@ -27,7 +27,6 @@ def _assemble_B(nodes, connec, I ):
     return spmatrix( vals, Is, Js, (3*nelem, 3*nnodes))
 
 #
-#
 # input nparray matrix
 #
 def _assemble_d_or_p_vec( mat ):
@@ -89,20 +88,25 @@ def _assemble_P_and_q(nodes, connec, ks_vec, n_dofs_d, nelem, d_vec ):
     q = matrix( [ [matrix(lengths).trans()], [matrix(0.0,(1,3*nelem))], [ matrix( -np.array(d_vec) ).trans() ] ] ).trans()
     return P, q
 
+
+
 #
 # variables are x: [q,v,r] and s
 #
-def solve_socp( nodes, connec, ks_vec, disp_mat, fext_mat ):
+def solve( nodes, connec, ks_vec, disp_mat, fext_mat ):
 
-    print( "\n=== WELCOME TO SC Solver ===\n" )
+    print( "\n=== Welcome to cablenets ===\n" )
     nnodes = np.size( nodes, 0 )
     nelem  = np.size( connec, 0 )
+
     print( "nodes", nnodes, "nelem: ", nelem,  )
     # dims |@··@|~= {'l': 0, 'q': [n+1], 's': []}
+
     I = spdiag( matrix(1,(1,3)))
     print("I :\n", I)
     B = _assemble_B(nodes, connec, I)    
     print("B :\n", B)
+
     # assemble d and p
     d_vec, dofs_d = _assemble_d_or_p_vec(disp_mat)    
     p_vec, dofs_p = _assemble_d_or_p_vec(fext_mat)    
@@ -183,7 +187,9 @@ def solve_socp( nodes, connec, ks_vec, disp_mat, fext_mat ):
     normal_forces = np.reshape(normal_forces, (nelem,1))
     return nodes_def, normal_forces
 
-
+# 
+# 
+#
 def plot(nodes, connec, nodes_def, normal_forces ):
     nnodes = np.size( nodes, 0 )
     nelem  = np.size( connec, 0 )
@@ -225,3 +231,4 @@ def plot(nodes, connec, nodes_def, normal_forces ):
     ax.set_zlabel('z')
     fig.colorbar(m, ax=ax)
     plt.show()
+
