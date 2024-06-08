@@ -7,10 +7,8 @@ import numpy as np
 # 
 # see documentation for solve function
 #
-def solve( ):
-
-  return 1
-
+def solve(a ):
+  return a+1
 
 # 
 # see documentation for solution function
