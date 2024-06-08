@@ -7,4 +7,5 @@ import matplotlib as mpl
 import cablenets
 
 def test_answer():
-    assert 5 == 5
+    b = cablenets.solve(2)
+    assert b == 3
