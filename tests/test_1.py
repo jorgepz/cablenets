@@ -20,5 +20,7 @@ fext_mat = np.array([[ 1, 1, 0.0, 0]]) # node fx fy fz
 
 nodes_def, normal_forces = cn.solve( nodes, connec, ks_vec, disp_mat, fext_mat )
 
+cn.plot( nodes, connec, nodes_def, normal_forces, False )
+
 def test_normal_force():
     assert ( abs(normal_forces[1]) < 1e-7) and ( abs(normal_forces[0]-1)<1e-7 )
