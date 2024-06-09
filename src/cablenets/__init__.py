@@ -110,7 +110,7 @@ def solve( nodes, connec, ks_vec, disp_mat, fext_mat ):
 # 
 # 
 #
-def plot(nodes, connec, nodes_def, normal_forces ):
+def plot(nodes, connec, nodes_def, normal_forces, bool_show = True ):
     nnodes = np.size( nodes, 0 )
     nelem  = np.size( connec, 0 )
 
@@ -150,5 +150,6 @@ def plot(nodes, connec, nodes_def, normal_forces ):
     ax.set_ylabel('y')
     ax.set_zlabel('z')
     fig.colorbar(m, ax=ax)
-    plt.show()
+    if bool_show:
+        plt.show()
 
