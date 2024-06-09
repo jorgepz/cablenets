@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
 # load cablenets functions
-from cablenets.cablenets import _assemble_B, _assemble_d_or_p_vec, _assemble_P_and_q, _assemble_G
+from cablenets.cablenets import _assemble_B, _assemble_d_or_p_vec, _assemble_P_and_q, _assemble_G, _remove_loads_in_fixed_nodes
 
 #
 # variables are x: [q,v,r] and s
@@ -31,10 +31,10 @@ def solve( nodes, connec, ks_vec, disp_mat, fext_mat ):
     d_vec, dofs_d = _assemble_d_or_p_vec(disp_mat)    
     p_vec, dofs_p = _assemble_d_or_p_vec(fext_mat)    
 
-    print(" dvec ", d_vec)
-    print(" pvec ", p_vec)
-    print(" dofs d ", dofs_d)
-    print(" dofs p ", dofs_p)
+    p_vec, dofs_p = _remove_loads_in_fixed_nodes(p_vec, dofs_p, d_vec, dofs_d)
+
+    dofs_d = dofs_d.tolist()
+    dofs_p = dofs_p.tolist()
     
     BTp = B[:,dofs_p].trans()
     BTd = B[:,dofs_d].trans()
@@ -130,21 +130,21 @@ def plot(nodes, connec, nodes_def, normal_forces ):
 
     for ele in range( nelem ):
         ini_node, end_node = connec[ele, :]
-        if ele==0:
-            legR='reference'
-            legD='deformed'
-        else:
-            legR = ''
-            legD = ''
+        # if ele==0:
+        #     legR='reference'
+        #     legD='deformed'
+        # else:
+        #     legR = ''
+        #     legD = ''
 
         ax.plot(    [nodes[ini_node,0], nodes[end_node,0]],
                     [nodes[ini_node,1], nodes[end_node,1]],
-                 zs=[nodes[ini_node,2], nodes[end_node,2]], label=legR, c='gray')
+                 zs=[nodes[ini_node,2], nodes[end_node,2]], c='lightgray',linestyle='--')
 
         ax.plot(    [nodes_def[ini_node,0], nodes_def[end_node,0]],
                     [nodes_def[ini_node,1], nodes_def[end_node,1]],
-                 zs=[nodes_def[ini_node,2], nodes_def[end_node,2]], label=legD, c=m.to_rgba(normal_forces[ele]))
-    ax.legend()
+                 zs=[nodes_def[ini_node,2], nodes_def[end_node,2]], c=m.to_rgba(normal_forces[ele]))
+    # ax.legend()
     ax.axis('equal')
     ax.set_xlabel('x')
     ax.set_ylabel('y')
