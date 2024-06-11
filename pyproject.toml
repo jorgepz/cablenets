@@ -4,7 +4,7 @@ version = "0.0.1"
 authors = [
   { name="Jorge Pérez Zerpa", email="jorgepz@fing.edu.uy" },
 ]
-description = "A Structural Cable Nets Solver"
+description = "A Python Module for Structural Cable Nets Analysis"
 readme = "README.md"
 requires-python = ">=3.8"
 classifiers = [
@@ -14,6 +14,7 @@ classifiers = [
 ]
 
 dependencies = [
+    "numpy",
     "matplotlib",
     "cvxopt",
 ]
