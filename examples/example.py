@@ -30,7 +30,7 @@ disp_mat = np.array([ [          0, 0   , 0, 0   ],
 
 fext_mat  = np.zeros((nelems-1,4))
 for i in range(nelems-1):
-    fext_mat[i,:] = [ i+1, 0, 0.0, -0.01] # node fx fy fz
+    fext_mat[i,:] = [ i+1, 0, 0.0, -1.0e-3] # node fx fy fz
 
 nodes_def, normal_forces = solve( nodes, connec, ks_vec, disp_mat, fext_mat )
 
