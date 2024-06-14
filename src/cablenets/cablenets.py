@@ -33,6 +33,7 @@ import matplotlib.cm as cm
 
 # input nparray matrices
 def _assemble_B(nodes, connec, I ):
+    connec = connec[:,2:4]
     nnodes = np.size( nodes, 0 )
     nelem  = np.size( connec, 0 )
     vals = []
@@ -40,6 +41,7 @@ def _assemble_B(nodes, connec, I ):
     Js   = []
     print("assembling matrix B ...")
     for ele in range( nelem ):
+        print(ele)
         ini_node, end_node = connec[ele, :]
         Is.extend( range( ele*3     +0, (ele+1)*3      ) )
         Js.extend( range( ini_node*3+0, (ini_node+1)*3 ) )
@@ -85,18 +87,24 @@ def _assemble_G(n_dofs_d, nnodes, nelem ):
     print(" done.\n")
     return spmatrix( vals, Is, Js, ((1+3)*nelem, (1+3)*nelem + n_dofs_d))
 
-def _assemble_P_and_q(nodes, connec, ks_vec, n_dofs_d, nelem, d_vec ):
+def _assemble_P_and_q(nodes, connec, youngs, areas, n_dofs_d, nelem, d_vec ):
+    youngs = youngs[ connec[:,0]]
+    areas  = areas [ connec[:,1]]
+    connec = connec[:,2:4]
+
     vals = []
     Is   = []
     Js   = []
     lengths = np.empty((nelem))
+
     print("assembling matrix P and q ...")
     for ele in range( nelem ):
         # q
         Is.extend(   [ ele ] )
         Js.extend(   [ ele ] )
-        vals.extend( [1/ks_vec[ele]] )
         lengths[ele] = np.linalg.norm( nodes[ connec[ele,1],:] - nodes[ connec[ele,0],:])
+        k = youngs[ele]*areas[ele]/lengths[ele]
+        vals.extend( [1/k] )
     print(" done.\n")
     P = spmatrix( vals, Is, Js, ((1+3)*nelem+n_dofs_d, (1+3)*nelem+n_dofs_d) )
     q = matrix( [ [matrix(lengths).trans()], [matrix(0.0,(1,3*nelem))], [ matrix( -np.array(d_vec) ).trans() ] ] ).trans()

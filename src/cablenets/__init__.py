@@ -37,7 +37,7 @@ from cablenets.cablenets import _assemble_B, _assemble_d_or_p_vec, _assemble_P_a
 #
 # variables are x: [q,v,r] and s
 #
-def solve( nodes, connec, ks_vec, disp_mat, fext_mat ):
+def solve( nodes, connec, youngs, areas, disp_mat, fext_mat ):
 
     print( "\n=== Welcome to cablenets ===\n" )
     nnodes = np.size( nodes, 0 )
@@ -62,7 +62,7 @@ def solve( nodes, connec, ks_vec, disp_mat, fext_mat ):
     n_dofs_d = len( dofs_d )
     n_dofs_p = len( dofs_p )
 
-    cvxP, cvxq = _assemble_P_and_q(nodes, connec, ks_vec, n_dofs_d, nelem, d_vec)    
+    cvxP, cvxq = _assemble_P_and_q(nodes, connec, youngs, areas, n_dofs_d, nelem, d_vec)    
 
     # primal-dual equality constraints
     cvxG = _assemble_G( n_dofs_d, nnodes, nelem )
@@ -100,6 +100,7 @@ def solve( nodes, connec, ks_vec, disp_mat, fext_mat ):
 def plot(nodes, connec, nodes_def, normal_forces, bool_show = True ):
     nnodes = np.size( nodes, 0 )
     nelem  = np.size( connec, 0 )
+    connec = connec[:,2:4]
 
     print("nodes def", np.shape(nodes_def))
     print("type ", type(normal_forces))
