@@ -1,3 +1,27 @@
+'''
+MIT License
+
+Copyright (c) 2024 Jorge Pérez Zerpa
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+'''
+
 import os
 
 # load external dependencies
@@ -13,19 +37,15 @@ from cablenets.cablenets import _assemble_B, _assemble_d_or_p_vec, _assemble_P_a
 #
 # variables are x: [q,v,r] and s
 #
-def solve( nodes, connec, ks_vec, disp_mat, fext_mat ):
+def solve( nodes, connec, youngs, areas, disp_mat, fext_mat ):
 
     print( "\n=== Welcome to cablenets ===\n" )
     nnodes = np.size( nodes, 0 )
     nelem  = np.size( connec, 0 )
-
     print( "nodes", nnodes, "nelem: ", nelem,  )
-    # dims |@··@|~= {'l': 0, 'q': [n+1], 's': []}
 
     I = spdiag( matrix(1,(1,3)))
-    print("I :\n", I)
     B = _assemble_B(nodes, connec, I)    
-    print("B :\n", B)
 
     # assemble d and p
     d_vec, dofs_d = _assemble_d_or_p_vec(disp_mat)    
@@ -42,16 +62,11 @@ def solve( nodes, connec, ks_vec, disp_mat, fext_mat ):
     n_dofs_d = len( dofs_d )
     n_dofs_p = len( dofs_p )
 
-    cvxP, cvxq = _assemble_P_and_q(nodes, connec, ks_vec, n_dofs_d, nelem, d_vec)    
-
-    print("B size", B.size, "   BT \n", BTd, BTd.size, "ndofs p", n_dofs_p, "ndofs d", n_dofs_d)
+    cvxP, cvxq = _assemble_P_and_q(nodes, connec, youngs, areas, n_dofs_d, nelem, d_vec)    
 
     # primal-dual equality constraints
     cvxG = _assemble_G( n_dofs_d, nnodes, nelem )
     cvxh = matrix(0.0,(1,(1+3)*nelem)).trans()
-    print("G ", cvxG )
-    print("size G",cvxG.size)
-    print("size h",cvxh.size)
 
     # primal equality constraints
     cvxA = matrix([
@@ -60,51 +75,23 @@ def solve( nodes, connec, ks_vec, disp_mat, fext_mat ):
     [ spmatrix( [],[],[], (n_dofs_p, n_dofs_d )), -spdiag( matrix(1.0, (1,n_dofs_d)) ) ]
     ]) 
     cvxb = matrix( [ matrix( np.array(p_vec) ) , matrix(0.0, (n_dofs_d, 1)) ] )
-    print("size A ",cvxA.size)
-    print("size b ",cvxb.size)
 
-    # import sys
-    #np.set_printoptions(threshold=np.inf,linewidth=10000)
-    print(" ================ ")
-    print("P",cvxP)
-    print("q",cvxq)
-    print("size A ",cvxA.size)
-    print(" A ",cvxA[:,0:2])
-    print(" A ",cvxA[:,2:8])
-    print(" A ",cvxA[:,8:14])
-    print(" b ",cvxb)
-
-    print(" G ",cvxG[:,0:2])
-    print(" G ",cvxG[:,2:8])
-    print(" G ",cvxG[:,8:14])
-    print(" h ",cvxh)
     # cone set
-
     cvxdims = {'l': 0, 'q': [4]*nelem , 's': []}
-    print("dims", cvxdims['q'])
 
     solu = solvers.coneqp( cvxP, cvxq, cvxG, cvxh, cvxdims, cvxA, cvxb )   
 
     y = solu['y']
-    print("solu z", solu['z'])
     x = solu['x']
     qs = x[0:nelem]
     vs = x[(nelem):(nelem+3*nelem)]
-    print("xs: ", x)
-    print("y: ", y)
-    print("qs: ", qs)
-    print("vs: ", vs)
     nodes_def = np.zeros( np.size( y ))
-    print("U: ", nodes_def)
-    print("U: ", len(dofs_p))
     nodes_def[dofs_p] = -y[0:len(dofs_p)]
     nodes_def[dofs_d] = -y[len(dofs_p):(len(y))]
-    print("U: ", nodes_def)
     nodes_def = np.reshape(nodes_def, (nnodes,3))
-    print("U: ", nodes_def)
-    print("size: ", np.shape(nodes_def) )
     normal_forces = (np.array(qs))
     normal_forces = np.reshape(normal_forces, (nelem,1))
+
     return nodes_def, normal_forces
 
 # 
@@ -113,6 +100,7 @@ def solve( nodes, connec, ks_vec, disp_mat, fext_mat ):
 def plot(nodes, connec, nodes_def, normal_forces, bool_show = True ):
     nnodes = np.size( nodes, 0 )
     nelem  = np.size( connec, 0 )
+    connec = connec[:,2:4]
 
     print("nodes def", np.shape(nodes_def))
     print("type ", type(normal_forces))
@@ -152,4 +140,3 @@ def plot(nodes, connec, nodes_def, normal_forces, bool_show = True ):
     fig.colorbar(m, ax=ax)
     if bool_show:
         plt.show()
-

@@ -1,5 +1,6 @@
 
 # example 
+
 import sys
 sys.path.append('../src')
 
@@ -8,11 +9,23 @@ import cablenets as cn
 
 Lx = 2
 Ly = 2
-k = 2
+k  = 2
 
-nodes  = np.array([ [  0,  0, 0 ],
-                    [ Lx,  0, 0 ],
-                    [  0, Ly, 0 ] ])
+nCellsX = 2
+nCellsY = 2
+nNodesX = nCellsX
+nNodesY = nCellsY
+
+nElems = nCellsX
+
+nodes  = np.zeros( (nNodesX * nNodesY, 3) )
+for i in range( nNodesX ):
+  for j in range( nNodesY ):
+    nodes[i+j*nNodesX,:] = [i*Lx/nCellsX, i*Ly/nCellsY, 0.0]
+
+connec = np.zeros([ [0,1],
+                    [1,2],
+                    [2,0] ])
 
 connec = np.array([ [0,1],
                     [1,2],
@@ -21,6 +34,7 @@ connec = np.array([ [0,1],
 print("nodes", nodes)
 print("conec", connec)
 
+# sigma = E eps 
 ks_vec = np.ones(np.shape(connec)[0])* k
 
 disp_mat = np.array([ [0, 0,      0 , 0],
