@@ -51,11 +51,16 @@ def solve( nodes, connec, youngs, areas, disp_mat, fext_mat ):
     d_vec, dofs_d = _assemble_d_or_p_vec(disp_mat)    
     p_vec, dofs_p = _assemble_d_or_p_vec(fext_mat)    
 
+    print("dofs d", dofs_d)
+
     p_vec, dofs_p = _remove_loads_in_fixed_nodes(p_vec, dofs_p, d_vec, dofs_d)
 
     dofs_d = dofs_d.tolist()
     dofs_p = dofs_p.tolist()
     
+    print("dofs d", dofs_d)
+    print("dofs p", dofs_p)
+
     BTp = B[:,dofs_p].trans()
     BTd = B[:,dofs_d].trans()
 
@@ -85,7 +90,7 @@ def solve( nodes, connec, youngs, areas, disp_mat, fext_mat ):
     x = solu['x']
     qs = x[0:nelem]
     vs = x[(nelem):(nelem+3*nelem)]
-    nodes_def = np.zeros( np.size( y ))
+    nodes_def = np.zeros( (nnodes*3,1 ))
     nodes_def[dofs_p] = -y[0:len(dofs_p)]
     nodes_def[dofs_d] = -y[len(dofs_p):(len(y))]
     nodes_def = np.reshape(nodes_def, (nnodes,3))

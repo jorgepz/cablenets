@@ -25,7 +25,7 @@ for i in range(nelems):
     connec[i,:] = [0, 0, i, i+1 ]
 
 disp_mat = np.array([ [          0, 0   , 0, 0   ],
-                      [   nelems/2, L*.5, 0, L*.1],
+                      [   nelems/2, L*.5, L*.2, L*.1],
                       [     nelems, L   , 0, 0   ]])
 
 fext_mat  = np.zeros((nelems-1,4))
