@@ -57,13 +57,18 @@ for i in range(nc):
     ind_cell = ind_cell+1
     connec[ind_cell  , : ] = [0, 0, (i+1)*nn-1  , (i+2)*nn-1 ]
 
-disp_mat = np.array([ [          0, 0   , 0, 0   ],
-                      [   nn-1, 0, 0, 0],
-                      [   nn*(nn-1), 0, 0, 0],
-                      [     nn*nn-1, 0   , 0, L   ]])
+print(nodes)
+print(connec)
 
-print("nn", nn*nn-1)
-fext_mat = np.array([[ 1, 0, 0.0, -1.0e-3]]) # node fx fy fz
+pos_z = L*.5
+
+disp_mat = np.array([ [          0,    0, 0, pos_z   ],
+                      [       nn-1,    L, 0,     0   ],
+                      [  nn*(nn-1),    0, L,     0   ],
+                      [    nn*nn-1,    L, L, pos_z   ]])
+
+print("disp_mat",  disp_mat)
+fext_mat = np.array([[ 1, 0.0, 0.0, 0.0 ]]) # node fx fy fz
 
 nodes_def, normal_forces = solve( nodes, connec, youngs, areas, disp_mat, fext_mat )
 
