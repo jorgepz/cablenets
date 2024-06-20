@@ -49,9 +49,24 @@ def solve( nodes, connec, youngs, areas, disp_mat, fext_mat ):
 
     # assemble d and p
     d_vec, dofs_d = _assemble_d_or_p_vec(disp_mat)    
-    p_vec, dofs_p = _assemble_d_or_p_vec(fext_mat)    
+    p_vec_aux, dofs_p_aux = _assemble_d_or_p_vec(fext_mat)    
 
+    p_vec  = np.zeros( 3*nnodes )
+    dofs_p = np.arange( 3*nnodes )
     print("dofs d", dofs_d)
+    print("type dofs p aux", type(dofs_p_aux))
+    print("dofs p aux", dofs_p_aux.shape )
+    print("vec p aux", p_vec_aux.shape )
+    print("vec p", p_vec.shape )
+    p_vec[dofs_p_aux] = p_vec[dofs_p_aux] + p_vec_aux
+
+    print("dofs p", dofs_p)
+
+    p_vec  = np.delete(p_vec, dofs_d)
+    dofs_p = np.delete(dofs_p,dofs_d) 
+    
+    print("dofs p post remove", dofs_p)
+    print("pvec", p_vec)
 
     p_vec, dofs_p = _remove_loads_in_fixed_nodes(p_vec, dofs_p, d_vec, dofs_d)
 
@@ -60,6 +75,7 @@ def solve( nodes, connec, youngs, areas, disp_mat, fext_mat ):
     
     print("dofs d", dofs_d)
     print("dofs p", dofs_p)
+
 
     BTp = B[:,dofs_p].trans()
     BTd = B[:,dofs_d].trans()
