@@ -14,7 +14,7 @@ import numpy as np
 
 # scalar parameters
 L   = 2 # length of the edge
-nn  = 3 # number nodes per edge
+nn  = 11 # number nodes per edge
 E   = 1 # young modulus
 A   = 1 # cross-section area
 
