@@ -2,19 +2,16 @@
 # 2 element cable net
 import sys
 sys.path.append('./src')
-
 import numpy as np
-from math import pi
-
 from cablenets import solve, plot
 
 # scalar parameters
-L      = 2 
-youngs = np.array([ 2 ])
-areas  = np.array([ 1 ])
+L = 2
+youngs = np.array([2])
+areas = np.array([1])
 nelems = 2
 
-nodes  = np.zeros((nelems+1,3))
+nodes = np.zeros((nelems+1,3))
 for i in range(nelems+1):
     nodes[i,:] = [i*L/nelems, 0.0, 0.0]
 
