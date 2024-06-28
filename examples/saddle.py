@@ -11,12 +11,14 @@ sys.path.append(dirname('../src/'))
 # import modules
 from cablenets import solve, plot
 import numpy as np
+from math import pi, sqrt
 
 # scalar parameters
-L   = 2 # length of the edge
-nn  = 11 # number nodes per edge
-E   = 1 # young modulus
-A   = 1 # cross-section area
+L       = 2        # length of the edge
+nn      = 18       # number nodes per edge
+E       = 200      # young modulus (GPa)
+d       = .01      # cross-section diameter
+gamma   = 785000*9.81/1e9 # density (kg/m3*m/s2/1e9: GN/m3)
 
 nc = nn-1 # number cells per edge
 
@@ -33,6 +35,7 @@ for j in range(nn):
 
 # young and area vectors
 youngs = np.array([ E ])
+A      = pi*d**2/4
 areas  = np.array([ A ])
 
 # connectivity matrix
@@ -68,7 +71,11 @@ disp_mat = np.array([ [          0,    0, 0, pos_z   ],
                       [    nn*nn-1,    L, L, pos_z   ]])
 
 print("disp_mat",  disp_mat)
-fext_mat = np.array([[ 1, 0.0, 0.0, 0.0 ]]) # node fx fy fz
+lref = L * sqrt(2)/(2*nc)
+fext_mat  = np.zeros((nnodes,4))
+for i in range(nnodes):
+    fext_mat[i,:] = [ i, 0, 0.0, -gamma*areas[0]*lref*2 ] # node fx fy fz
+# fext_mat  = np.array([[1, 0.0, 0 , 0]])
 
 nodes_def, normal_forces = solve( nodes, connec, youngs, areas, disp_mat, fext_mat )
 
