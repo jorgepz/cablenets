@@ -108,6 +108,7 @@ def _assemble_P_and_q(nodes, connec, youngs, areas, n_dofs_d, nelem, d_vec ):
     print(" done.\n")
     P = spmatrix( vals, Is, Js, ((1+3)*nelem+n_dofs_d, (1+3)*nelem+n_dofs_d) )
     q = matrix( [ [matrix(lengths).trans()], [matrix(0.0,(1,3*nelem))], [ matrix( -np.array(d_vec) ).trans() ] ] ).trans()
+    print("P", P)
     return P, q
 
 
@@ -127,7 +128,6 @@ def _remove_loads_in_fixed_nodes(p_vec, dofs_p, d_vec, dofs_d):
 # variables are x: [q,v,r] and s
 #
 def solve( nodes, connec, youngs, areas, disp_mat, fext_mat ):
-
 
     print( "\n=== Welcome to cablenets ===\n" )
     nnodes = np.size( nodes, 0 )
@@ -209,9 +209,10 @@ def solve( nodes, connec, youngs, areas, disp_mat, fext_mat ):
 #
 def plot(nodes, connec, nodes_def, normal_forces, bool_show = True ):
 
-    colormap = 'YlGnBu'
-    # 'rainbow'
-    # 'Set1'
+    # colormap = 'YlGnBu'
+    colormap = 'rainbow'
+    # colormap = 'Set1'
+    
     nnodes = np.size( nodes, 0 )
     nelem  = np.size( connec, 0 )
     connec = connec[:,2:4]
