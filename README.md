@@ -6,6 +6,7 @@ _cablenets_ is a tiny python module for solving structural cable nets analysis p
 
 The solver implements an optimization formulation presented in [this paper](https://doi.org/10.1016/S0020-7683(03)00215-4), published in the International Journal of Solids and Structures.
 
+![image saddle net](https://github.com/jorgepz/cablenets/blob/main/docs/assets/docs/assets/saddle_net.png)
 
 ## Installing :crossed_fingers:
 
