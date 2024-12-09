@@ -221,8 +221,8 @@ def plot(nodes, connec, nodes_def, normal_forces, bool_show = True ):
     print("type ", type(normal_forces))
     print("shape ", np.shape(normal_forces))
 
-    max_normal_force = normal_forces.max()
-    min_normal_force = 0# normal_forces.min()
+    max_normal_force = max( normal_forces.max(), 0)
+    min_normal_force = 0 # normal_forces.min()
 
     normali = colo.Normalize(vmin=min_normal_force, vmax=max_normal_force)
 

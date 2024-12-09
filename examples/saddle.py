@@ -15,7 +15,7 @@ from math import pi, sqrt
 
 # scalar parameters
 L       = 2        # length of the edge
-nn      = 18       # number nodes per edge
+nn      = 10       # number nodes per edge
 E       = 200      # young modulus (GPa)
 d       = .01      # cross-section diameter
 gamma   = 785000*9.81/1e9 # density (kg/m3*m/s2/1e9: GN/m3)
