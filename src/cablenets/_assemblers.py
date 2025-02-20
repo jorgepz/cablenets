@@ -58,6 +58,25 @@ def _assemble_G(n_dofs_d, nnodes, nelem ):
     print(" done.\n")
     return spmatrix( vals, Is, Js, ((1+3)*nelem, (1+3)*nelem + n_dofs_d))
 
+def _assemble_G_primal(n_dofs_d, nnodes, nelem ):
+    vals = []
+    Is   = []
+    Js   = []
+    print("assembling matrix G ...")
+    for ele in range( nelem ):
+        # q
+        Is.extend( [ (ele)*4 ] )
+        Js.extend( [  ele    ] )
+        vals.extend( [-1] )
+        
+        # v
+        Is.extend( range(       ele*4+1,        ele*4+4 ) )
+        Js.extend( range( nelem+ele*3  , nelem+(ele+1)*3      ) )
+        vals.extend( (-1.0,-1.0,-1.0) )
+    print(" done.\n")
+    return spmatrix( vals, Is, Js, ((1+3)*nelem, (1+3)*nelem + n_dofs_d))
+
+
 def _assemble_P_and_q(nodes, connec, youngs, areas, n_dofs_d, nelem, d_vec ):
     youngs = youngs[ connec[:,0]]
     areas  = areas [ connec[:,1]]

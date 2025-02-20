@@ -31,7 +31,9 @@ import matplotlib.colors as colo
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
-from cablenets._assemblers import _assemble_B, _assemble_d_or_p_vec, _assemble_G, _assemble_P_and_q
+from cablenets._assemblers import _assemble_B, _assemble_d_or_p_vec, _assemble_P_and_q
+from cablenets._assemblers import _assemble_G, _assemble_G_primal
+
 
 def _remove_loads_in_fixed_nodes(p_vec, dofs_p, d_vec, dofs_d):
     filtered_dofs_p = dofs_p
@@ -48,7 +50,7 @@ def _remove_loads_in_fixed_nodes(p_vec, dofs_p, d_vec, dofs_d):
 #
 # variables are x: [q,v,r] and s
 #
-def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual = "primal"  ):
+def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_flag = "primal"  ):
 
     print( "\n=== Welcome to cablenets ===\n" )
     nnodes = np.size( nodes, 0 )
@@ -87,25 +89,50 @@ def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual = 
     print("dofs d", dofs_d)
     print("dofs p", dofs_p)
 
-    BTp = B[:,dofs_p].trans()
-    BTd = B[:,dofs_d].trans()
 
-    n_dofs_d = len( dofs_d )
-    n_dofs_p = len( dofs_p )
+    if primal_dual_flag == "primal":
 
-    cvxP, cvxq = _assemble_P_and_q(nodes, connec, youngs, areas, n_dofs_d, nelem, d_vec)    
+        BTp = B[:,dofs_p].trans()
+        BTd = B[:,dofs_d].trans()
 
-    # primal-dual equality constraints
-    cvxG = _assemble_G( n_dofs_d, nnodes, nelem )
-    cvxh = matrix(0.0,(1,(1+3)*nelem)).trans()
+        n_dofs_d = len( dofs_d )
+        n_dofs_p = len( dofs_p )
 
-    # primary vars equality constraints
-    cvxA = matrix([
-    [ spmatrix([],[],[], (n_dofs_p, nelem )), spmatrix([],[],[], (n_dofs_d, nelem )) ],
-    [ BTp, BTd ],
-    [ spmatrix( [],[],[], (n_dofs_p, n_dofs_d )), -spdiag( matrix(1.0, (1,n_dofs_d)) ) ]
-    ]) 
-    cvxb = matrix( [ matrix( np.array(p_vec) ) , matrix(0.0, (n_dofs_d, 1)) ] )
+        cvxP, cvxq = _assemble_P_and_q(nodes, connec, youngs, areas, n_dofs_d, nelem, d_vec)    
+
+        # primary-slack equality constraints
+        cvxG = _assemble_G_primal( n_dofs_d, nnodes, nelem )
+        cvxh = matrix(0.0,(1,(1+3)*nelem)).trans()
+
+        # primary vars equality constraints
+        cvxA = matrix([
+        [ spmatrix([],[],[], (n_dofs_p, nelem )), spmatrix([],[],[], (n_dofs_d, nelem )) ],
+        [ BTp, BTd ],
+        [ spmatrix( [],[],[], (n_dofs_p, n_dofs_d )), -spdiag( matrix(1.0, (1,n_dofs_d)) ) ]
+        ]) 
+        cvxb = matrix( [ matrix( np.array(p_vec) ) , matrix(0.0, (n_dofs_d, 1)) ] )
+
+    elif primal_dual_flag=="dual":
+
+        BTp = B[:,dofs_p].trans()
+        BTd = B[:,dofs_d].trans()
+
+        n_dofs_d = len( dofs_d )
+        n_dofs_p = len( dofs_p )
+
+        cvxP, cvxq = _assemble_P_and_q(nodes, connec, youngs, areas, n_dofs_d, nelem, d_vec)    
+
+        # primary-slack equality constraints
+        cvxG = _assemble_G( n_dofs_d, nnodes, nelem )
+        cvxh = matrix(0.0,(1,(1+3)*nelem)).trans()
+
+        # primary vars equality constraints
+        cvxA = matrix([
+        [ spmatrix([],[],[], (n_dofs_p, nelem )), spmatrix([],[],[], (n_dofs_d, nelem )) ],
+        [ BTp, BTd ],
+        [ spmatrix( [],[],[], (n_dofs_p, n_dofs_d )), -spdiag( matrix(1.0, (1,n_dofs_d)) ) ]
+        ]) 
+        cvxb = matrix( [ matrix( np.array(p_vec) ) , matrix(0.0, (n_dofs_d, 1)) ] )
 
 
     # cone set
