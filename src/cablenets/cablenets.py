@@ -23,7 +23,7 @@ SOFTWARE.
 '''
 
 # import cvx
-from cvxopt import matrix, spmatrix, spdiag, solvers
+from cvxopt import matrix, spmatrix, spdiag, solvers, sparse
 
 # import dependencies
 import numpy             as np
@@ -34,11 +34,6 @@ import matplotlib.cm as cm
 from cablenets._assemblers import _assemble_B, _assemble_d_or_p_vec
 from cablenets._assemblers import _assemble_P_and_q_primal, _assemble_P_and_q_dual
 from cablenets._assemblers import _assemble_G_dual, _assemble_G_primal
-
-import sys
-
-# np.set_printoptions(threshold=np.inf)
-np.set_printoptions(threshold=sys.maxsize)
 
 def _remove_loads_in_fixed_nodes(p_vec, dofs_p, d_vec, dofs_d):
     filtered_dofs_p = dofs_p
@@ -55,8 +50,10 @@ def _remove_loads_in_fixed_nodes(p_vec, dofs_p, d_vec, dofs_d):
 #
 # variables are x: [q,v,r] and s
 #
-def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_flag = "primal"  ):
+def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_flag = "primal", **kwargs ):
 
+    if "A" in kwargs:
+        print(kwargs["A"])
     print( "\n=== Welcome to cablenets ===\n" )
     nnodes = np.size( nodes, 0 )
     nelem  = np.size( connec, 0 )
@@ -124,6 +121,10 @@ def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_fl
         cvxA = spmatrix( vals, Is, Js, (n_dofs_d, nelem+3*nnodes) )
         cvxb = matrix( [ matrix( np.array(d_vec) ) ] )
         
+        if "A" in kwargs:
+            cvxA = sparse( [ [cvxA, matrix( kwargs["A"])] ])
+            cvxb = matrix( [ cvxb, matrix( kwargs["b"]) ] )
+
     elif primal_dual_flag=="dual":
 
         BTp = B[:,dofs_p].trans()
