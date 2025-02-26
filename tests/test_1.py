@@ -5,8 +5,10 @@ sys.path.append('./src')
 import numpy as np
 from cablenets import solve, plot
 
+# np.set_printoptions(threshold=sys.maxsize)
+
 # scalar parameters
-L = 2
+L = 2.0
 youngs = np.array([2])
 areas = np.array([1])
 nelems = 2
@@ -25,9 +27,19 @@ disp_mat = np.array([ [          0, 0   , 0, 0   ],
 fext_mat      = np.zeros((1,4))
 fext_mat[0,:] = [ 1, 1.0, 0.0, 0.0 ] # node fx fy fz
 
-nodes_def, normal_forces = solve( nodes, connec, youngs, areas, disp_mat, fext_mat )
+nodes_def_pri, normal_forces_pri = solve( nodes, connec, youngs, areas, disp_mat, fext_mat, "primal" )
 
-plot( nodes, connec, nodes_def, normal_forces, False )
+print(" nodes def", nodes_def_pri)
+print(" normal forc ", normal_forces_pri)
 
-def test_normal_force():
-    assert ( abs(normal_forces[1]) < 1e-6) and ( abs(normal_forces[0]-1)<1e-6 )
+nodes_def_dua, normal_forces_dua = solve( nodes, connec, youngs, areas, disp_mat, fext_mat, "dual" )
+
+print(" nodes def", nodes_def_dua)
+print(" normal forc ", normal_forces_dua)
+plot( nodes, connec, nodes_def_dua, normal_forces_dua, False )
+
+def test_normal_force_primal():
+    assert ( abs(normal_forces_pri[1]) < 1e-6) and ( abs(normal_forces_pri[0]-1)<1e-6 )
+
+def test_normal_force_dual():
+    assert ( abs(normal_forces_dua[1]) < 1e-6) and ( abs(normal_forces_dua[0]-1)<1e-6 )

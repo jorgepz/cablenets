@@ -42,7 +42,11 @@ for i in range(nelems-1):
     fext_mat[i,:] = [ i+1, 0, 0.0, -density*areas[0]*L*9.81/nelems ] # node fx fy fz
 
 # solve
-nodes_def, normal_forces = solve( nodes, connec, youngs, areas, disp_mat, fext_mat )
+nodes_def, normal_forces = solve( nodes, connec, youngs, areas, disp_mat, fext_mat, "primal" )
+
+# solve
+nodes_def, normal_forces = solve( nodes, connec, youngs, areas, disp_mat, fext_mat, "dual" )
+
 
 # plot
 plot( nodes, connec, nodes_def, normal_forces )
