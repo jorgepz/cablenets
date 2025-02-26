@@ -31,7 +31,8 @@ import matplotlib.colors as colo
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
-from cablenets._assemblers import _assemble_B, _assemble_d_or_p_vec, _assemble_P_and_q
+from cablenets._assemblers import _assemble_B, _assemble_d_or_p_vec
+from cablenets._assemblers import _assemble_P_and_q_primal, _assemble_P_and_q_dual
 from cablenets._assemblers import _assemble_G, _assemble_G_primal
 
 
@@ -60,7 +61,8 @@ def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_fl
     I = spdiag( matrix(1,(1,3)))
     B = _assemble_B(nodes, connec, I)    
 
-    # assemble d and p
+    # --------------------------------------------   
+    # assemble d and p  and compute dofs
     d_vec, dofs_d = _assemble_d_or_p_vec(def_coord_mat)    
     p_vec_aux, dofs_p_aux = _assemble_d_or_p_vec(fext_mat)    
 
@@ -86,9 +88,8 @@ def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_fl
     dofs_d = dofs_d.tolist()
     dofs_p = dofs_p.tolist()
     
-    print("dofs d", dofs_d)
-    print("dofs p", dofs_p)
-
+    print("dofs d", dofs_d,"\ndofs p", dofs_p)
+    # --------------------------------------------   
 
     if primal_dual_flag == "primal":
 
@@ -98,7 +99,7 @@ def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_fl
         n_dofs_d = len( dofs_d )
         n_dofs_p = len( dofs_p )
 
-        cvxP, cvxq = _assemble_P_and_q(nodes, connec, youngs, areas, n_dofs_d, nelem, d_vec)    
+        cvxP, cvxq = _assemble_P_and_q_primal(nodes, connec, youngs, areas, nnodes, n_dofs_d, nelem, d_vec)    
 
         # primary-slack equality constraints
         cvxG = _assemble_G_primal( n_dofs_d, nnodes, nelem )
@@ -120,7 +121,7 @@ def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_fl
         n_dofs_d = len( dofs_d )
         n_dofs_p = len( dofs_p )
 
-        cvxP, cvxq = _assemble_P_and_q(nodes, connec, youngs, areas, n_dofs_d, nelem, d_vec)    
+        cvxP, cvxq = _assemble_P_and_q_dual(nodes, connec, youngs, areas, n_dofs_d, nelem, d_vec)    
 
         # primary-slack equality constraints
         cvxG = _assemble_G( n_dofs_d, nnodes, nelem )

@@ -77,7 +77,31 @@ def _assemble_G_primal(n_dofs_d, nnodes, nelem ):
     return spmatrix( vals, Is, Js, ((1+3)*nelem, (1+3)*nelem + n_dofs_d))
 
 
-def _assemble_P_and_q(nodes, connec, youngs, areas, n_dofs_d, nelem, d_vec ):
+def _assemble_P_and_q_primal(nodes, connec, youngs, areas, nnodes, n_dofs_d, nelem, d_vec ):
+    youngs = youngs[ connec[:,0]]
+    areas  = areas [ connec[:,1]]
+    connec = connec[:,2:4]
+
+    vals = []
+    Is   = []
+    Js   = []
+    lengths = np.empty((nelem))
+
+    print("assembling matrix P and q ...")
+    for ele in range( nelem ):
+        # q
+        Is.extend(   [ ele ] )
+        Js.extend(   [ ele ] )
+        lengths[ele] = np.linalg.norm( nodes[ connec[ele,1],:] - nodes[ connec[ele,0],:])
+        k = youngs[ele]*areas[ele]/lengths[ele]
+        vals.extend( [k] )
+    print(" done.\n")
+    P = spmatrix( vals, Is, Js, (nelem+3*nnodes, nelem+ 3*nnodes) )
+    q = matrix( [ [matrix(lengths).trans()], [matrix(0.0,(1,3*nelem))], [ matrix( -np.array(d_vec) ).trans() ] ] ).trans()
+    print("P", P)
+    return P, q
+
+def _assemble_P_and_q_dual(nodes, connec, youngs, areas, n_dofs_d, nelem, d_vec ):
     youngs = youngs[ connec[:,0]]
     areas  = areas [ connec[:,1]]
     connec = connec[:,2:4]
