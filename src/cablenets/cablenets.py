@@ -33,8 +33,12 @@ import matplotlib.cm as cm
 
 from cablenets._assemblers import _assemble_B, _assemble_d_or_p_vec
 from cablenets._assemblers import _assemble_P_and_q_primal, _assemble_P_and_q_dual
-from cablenets._assemblers import _assemble_G, _assemble_G_primal
+from cablenets._assemblers import _assemble_G_dual, _assemble_G_primal
 
+import sys
+
+# np.set_printoptions(threshold=np.inf)
+np.set_printoptions(threshold=sys.maxsize)
 
 def _remove_loads_in_fixed_nodes(p_vec, dofs_p, d_vec, dofs_d):
     filtered_dofs_p = dofs_p
@@ -68,51 +72,58 @@ def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_fl
 
     p_vec  = np.zeros( 3*nnodes )
     dofs_p = np.arange( 3*nnodes )
-    print("dofs d", dofs_d)
-    print("type dofs p aux", type(dofs_p_aux))
-    print("dofs p aux", dofs_p_aux.shape )
-    print("vec p aux", p_vec_aux.shape )
-    print("vec p", p_vec.shape )
+    # print("dofs d", dofs_d)
+    # print("type dofs p aux", type(dofs_p_aux))
+    # print("dofs p aux", dofs_p_aux.shape )
+    # print("vec p aux", p_vec_aux.shape )
+    # print("vec p", p_vec.shape )
     p_vec[dofs_p_aux] = p_vec[dofs_p_aux] + p_vec_aux
 
-    print("dofs p", dofs_p)
+    p_vec_zero_reactions = p_vec
 
     p_vec  = np.delete(p_vec, dofs_d)
     dofs_p = np.delete(dofs_p,dofs_d) 
     
-    print("dofs p post remove", dofs_p)
-    print("pvec", p_vec)
+    # print("dofs p post remove", dofs_p)
+    # print("pvec", p_vec)
 
     p_vec, dofs_p = _remove_loads_in_fixed_nodes(p_vec, dofs_p, d_vec, dofs_d)
+    # print("pvec", p_vec)
 
     dofs_d = dofs_d.tolist()
     dofs_p = dofs_p.tolist()
     
-    print("dofs d", dofs_d,"\ndofs p", dofs_p)
+    # print("dofs d", dofs_d,"\ndofs p", dofs_p)
     # --------------------------------------------   
 
     if primal_dual_flag == "primal":
 
-        BTp = B[:,dofs_p].trans()
-        BTd = B[:,dofs_d].trans()
+        # BTp = B[:,dofs_p].trans()
+        # BTd = B[:,dofs_d].trans()
 
         n_dofs_d = len( dofs_d )
         n_dofs_p = len( dofs_p )
 
-        cvxP, cvxq = _assemble_P_and_q_primal(nodes, connec, youngs, areas, nnodes, n_dofs_d, nelem, d_vec)    
+        cvxP, cvxq = _assemble_P_and_q_primal(nodes, connec, youngs, areas, nnodes, n_dofs_d, nelem, p_vec_zero_reactions)    
 
         # primary-slack equality constraints
-        cvxG = _assemble_G_primal( n_dofs_d, nnodes, nelem )
+        cvxG = _assemble_G_primal( nnodes, nelem, B )
         cvxh = matrix(0.0,(1,(1+3)*nelem)).trans()
 
-        # primary vars equality constraints
-        cvxA = matrix([
-        [ spmatrix([],[],[], (n_dofs_p, nelem )), spmatrix([],[],[], (n_dofs_d, nelem )) ],
-        [ BTp, BTd ],
-        [ spmatrix( [],[],[], (n_dofs_p, n_dofs_d )), -spdiag( matrix(1.0, (1,n_dofs_d)) ) ]
-        ]) 
-        cvxb = matrix( [ matrix( np.array(p_vec) ) , matrix(0.0, (n_dofs_d, 1)) ] )
+        for ele in range( nelem ):
+            ele_length = np.linalg.norm( nodes[ connec[ele,3],:] - nodes[ connec[ele,2],:])
+            cvxh[ele*4+0]= ele_length
 
+        vals = []
+        Is   = []
+        Js   = []
+        for ind in range(n_dofs_d):
+            Is.extend( [ ind ]         )
+            Js.extend( [ dofs_d[ind]+nelem ] )
+            vals.extend( [1.0] )
+        cvxA = spmatrix( vals, Is, Js, (n_dofs_d, nelem+3*nnodes) )
+        cvxb = matrix( [ matrix( np.array(d_vec) ) ] )
+        
     elif primal_dual_flag=="dual":
 
         BTp = B[:,dofs_p].trans()
@@ -124,7 +135,7 @@ def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_fl
         cvxP, cvxq = _assemble_P_and_q_dual(nodes, connec, youngs, areas, n_dofs_d, nelem, d_vec)    
 
         # primary-slack equality constraints
-        cvxG = _assemble_G( n_dofs_d, nnodes, nelem )
+        cvxG = _assemble_G_dual( n_dofs_d, nnodes, nelem )
         cvxh = matrix(0.0,(1,(1+3)*nelem)).trans()
 
         # primary vars equality constraints
@@ -135,7 +146,6 @@ def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_fl
         ]) 
         cvxb = matrix( [ matrix( np.array(p_vec) ) , matrix(0.0, (n_dofs_d, 1)) ] )
 
-
     # cone set
     cvxdims = {'l': 0, 'q': [4]*nelem , 's': []}
 
@@ -143,14 +153,24 @@ def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_fl
 
     y = solu['y']
     x = solu['x']
-    qs = x[0:nelem]
-    vs = x[(nelem):(nelem+3*nelem)]
-    nodes_def = np.zeros( (nnodes*3,1 ))
-    nodes_def[dofs_p] = -y[0:len(dofs_p)]
-    nodes_def[dofs_d] = -y[len(dofs_p):(len(y))]
-    nodes_def = np.reshape(nodes_def, (nnodes,3))
-    normal_forces = (np.array(qs))
-    normal_forces = np.reshape(normal_forces, (nelem,1))
+    s = solu['s']
+    z = solu['z']
+
+    if primal_dual_flag == "dual":
+        qs = x[0:nelem]
+        vs = x[(nelem):(nelem+3*nelem)]
+        nodes_def = np.zeros( (nnodes*3,1 ))
+        nodes_def[dofs_p] = -y[0:len(dofs_p)]
+        nodes_def[dofs_d] = -y[len(dofs_p):(len(y))]
+        nodes_def = np.reshape(nodes_def, (nnodes,3))
+        normal_forces = (np.array(qs))
+        normal_forces = np.reshape(normal_forces, (nelem,1))
+    elif primal_dual_flag == "primal":
+        cs = x[0:nelem]
+        nodes_def = np.reshape( x[(nelem):(nelem+3*nnodes)], (nnodes,3))
+        normal_forces = np.zeros( (nelem,1 ))
+        for j in range(nelem):
+            normal_forces[j] = np.linalg.norm( y[(j*3+0):(j*3+3)])
 
     return nodes_def, normal_forces
 
