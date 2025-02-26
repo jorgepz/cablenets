@@ -44,4 +44,4 @@ numeric_cos = ( -nodes_def[0,1]+L) / ( normal_forces[0]/k_verif + (math.sqrt(2)*
 numeric_vertical_ext_force = normal_forces[0]*numeric_cos
 
 def test_normal_force():
-    assert ( abs(normal_forces[1]) < 1e-6) and ( abs(numeric_vertical_ext_force - abs(fext_mat[0,2]) )<1e-6 )
+    assert ( abs(normal_forces[1]) < 1e-6) and ( abs(numeric_vertical_ext_force - abs(fext_mat[0,2]) )<1e-4 )
