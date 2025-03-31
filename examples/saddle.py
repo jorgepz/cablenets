@@ -30,7 +30,6 @@ nodes  = np.zeros((nnodes,3))
 for j in range(nn):
     for i in range(nn):
         ind_node = i + j*nn
-        print("node: ", ind_node)
         nodes[ ind_node, :] = [i*L/nc, j*L/nc, 0.0]
 
 # young and area vectors
@@ -44,14 +43,12 @@ connec = np.zeros((nelems,4),dtype=int)
 for j in range(nc):
     for i in range(nc):
         ind_cell = i + j*nc
-        print("ind cell", ind_cell, " i ", i, " j ", j)
         connec[ind_cell*2  , : ] = [0, 0, j*nn+i  , (j+1)*nn+i+1 ]
         connec[ind_cell*2+1, : ] = [0, 0, j*nn+i+1, (j+1)*nn+i   ]
+
 ind_cell = 2*nc*nc-1
 for i in range(nc):
-    print("i", i)
     ind_cell = ind_cell+1
-    print("ind_cell", ind_cell)
     connec[ind_cell  , : ] = [0, 0, i  , i+1 ]
     ind_cell = ind_cell+1
     connec[ind_cell  , : ] = [0, 0, i+ nn*(nn-1)  , i+1+nn*(nn-1)]
@@ -60,9 +57,6 @@ for i in range(nc):
     ind_cell = ind_cell+1
     connec[ind_cell  , : ] = [0, 0, (i+1)*nn-1  , (i+2)*nn-1 ]
 
-print(nodes)
-print(connec)
-
 pos_z = L*.5
 
 disp_mat = np.array([ [          0,    0, 0, pos_z   ],
@@ -70,14 +64,12 @@ disp_mat = np.array([ [          0,    0, 0, pos_z   ],
                       [  nn*(nn-1),    0, L,     0   ],
                       [    nn*nn-1,    L, L, pos_z   ]])
 
-print("disp_mat",  disp_mat)
 lref = L * sqrt(2)/(2*nc)
 fext_mat  = np.zeros((nnodes,4))
 for i in range(nnodes):
     fext_mat[i,:] = [ i, 0, 0.0, -gamma*areas[0]*lref*2 ] # node fx fy fz
-# fext_mat  = np.array([[1, 0.0, 0 , 0]])
 
-nodes_def, normal_forces = solve( nodes, connec, youngs, areas, disp_mat, fext_mat )
+nodes_def, normal_forces, reactions = solve( nodes, connec, youngs, areas, disp_mat, fext_mat )
 
 plot( nodes, connec, nodes_def, normal_forces )
 

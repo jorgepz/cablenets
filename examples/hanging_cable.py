@@ -33,7 +33,6 @@ for i in range(nelems):
 
 # deformed node positions
 disp_mat = np.array([ [          0, 0   , 0, 0   ],
-                      [   nelems/2, L*.4, L*.2, L*.1],
                       [     nelems, 0.8*L   , 0, 0   ]])
 
 # external forces
@@ -42,11 +41,7 @@ for i in range(nelems-1):
     fext_mat[i,:] = [ i+1, 0, 0.0, -density*areas[0]*L*9.81/nelems ] # node fx fy fz
 
 # solve
-nodes_def, normal_forces = solve( nodes, connec, youngs, areas, disp_mat, fext_mat, "primal" )
-
-# solve
-nodes_def, normal_forces = solve( nodes, connec, youngs, areas, disp_mat, fext_mat, "dual" )
-
+nodes_def, normal_forces, reactions = solve( nodes, connec, youngs, areas, disp_mat, fext_mat, "primal" )
 
 # plot
 plot( nodes, connec, nodes_def, normal_forces )

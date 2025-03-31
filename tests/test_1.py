@@ -5,8 +5,6 @@ sys.path.append('./src')
 import numpy as np
 from cablenets import solve, plot
 
-# np.set_printoptions(threshold=sys.maxsize)
-
 # scalar parameters
 L = 2.0
 youngs = np.array([2])
