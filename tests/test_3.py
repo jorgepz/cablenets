@@ -31,7 +31,7 @@ nodes_def, normal_forces, reactions = solve( nodes, connec, youngs, areas, disp_
 Aadd = np.array( [ [0,0,1,0,0,0,0,0,0,0,0], [0,0,0,0,1,0,0,0,0,0,0] ] )
 badd = np.array( [0,0])
 
-nodes_def, normal_forces = solve( nodes, connec, youngs, areas, disp_mat, fext_mat, "primal", A=Aadd, b=badd )
+nodes_def, normal_forces, reactions = solve( nodes, connec, youngs, areas, disp_mat, fext_mat, "primal", A=Aadd, b=badd )
 
 print(nodes_def)
 print(normal_forces)

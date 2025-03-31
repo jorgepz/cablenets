@@ -30,7 +30,7 @@ nodes_def_pri, normal_forces_pri, reactions = solve( nodes, connec, youngs, area
 print(" nodes def", nodes_def_pri)
 print(" normal forc ", normal_forces_pri)
 
-nodes_def_dua, normal_forces_dua = solve( nodes, connec, youngs, areas, disp_mat, fext_mat, "dual" )
+nodes_def_dua, normal_forces_dua, reactions = solve( nodes, connec, youngs, areas, disp_mat, fext_mat, "dual" )
 
 print(" nodes def", nodes_def_dua)
 print(" normal forc ", normal_forces_dua)
