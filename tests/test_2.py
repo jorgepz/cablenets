@@ -28,7 +28,7 @@ disp_mat = np.array([ [     0,     0   , L*.5, 0   ],
 fext_mat      = np.zeros((1,4))
 fext_mat[0,:] = [ 2, 0.0, 0.0, 0.0 ] # node fx fy fz
 
-nodes_def, normal_forces = solve( nodes, connec, youngs, areas, disp_mat, fext_mat )
+nodes_def, normal_forces, reactions = solve( nodes, connec, youngs, areas, disp_mat, fext_mat )
 
 print(nodes_def)
 print(normal_forces)
