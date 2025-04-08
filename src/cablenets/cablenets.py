@@ -50,7 +50,7 @@ def _remove_loads_in_fixed_nodes(p_vec, dofs_p, d_vec, dofs_d):
 #
 # variables are x: [q,v,r] and s
 #
-def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_flag = "primal", **kwargs ):
+def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_flag="primal", load_steps=1, **kwargs ):
 
     if "A" in kwargs:
         print(kwargs["A"])
@@ -64,7 +64,8 @@ def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_fl
 
     # --------------------------------------------   
     # assemble d and p  and compute dofs
-    d_vec, dofs_d = _assemble_d_or_p_vec(def_coord_mat)    
+    d_vec, dofs_d = _assemble_d_or_p_vec(def_coord_mat)   
+    x_vec = np.reshape(nodes,(nnodes*3))[dofs_d] # reference coodinates
     p_vec_aux, dofs_p_aux = _assemble_d_or_p_vec(fext_mat)    
 
     p_vec  = np.zeros( 3*nnodes )
@@ -80,7 +81,8 @@ def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_fl
     
     dofs_d = dofs_d.tolist()
     dofs_p = dofs_p.tolist()
-    
+
+    load_factors = np.linspace(0.0,1.0,load_steps+1)[1:]
     # --------------------------------------------   
 
     if primal_dual_flag == "primal":
@@ -138,7 +140,10 @@ def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_fl
     cvxdims = {'l': 0, 'q': [4]*nelem , 's': []}
 
     print("call to CVXOPT:")
-    solu = solvers.coneqp( cvxP, cvxq, cvxG, cvxh, cvxdims, cvxA, cvxb )   
+
+    for factor in load_factors:
+        print("factor: ", factor)
+        solu = solvers.coneqp( cvxP, cvxq, cvxG, cvxh, cvxdims, cvxA, cvxb )   
 
     x = solu['x']
     y = solu['y']
