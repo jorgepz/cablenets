@@ -69,11 +69,6 @@ def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_fl
 
     p_vec  = np.zeros( 3*nnodes )
     dofs_p = np.arange( 3*nnodes )
-    # print("dofs d", dofs_d)
-    # print("type dofs p aux", type(dofs_p_aux))
-    # print("dofs p aux", dofs_p_aux.shape )
-    # print("vec p aux", p_vec_aux.shape )
-    # print("vec p", p_vec.shape )
     p_vec[dofs_p_aux] = p_vec[dofs_p_aux] + p_vec_aux
 
     p_vec_zero_reactions = p_vec
@@ -81,22 +76,14 @@ def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_fl
     p_vec  = np.delete(p_vec, dofs_d)
     dofs_p = np.delete(dofs_p,dofs_d) 
     
-    # print("dofs p post remove", dofs_p)
-    # print("pvec", p_vec)
-
     p_vec, dofs_p = _remove_loads_in_fixed_nodes(p_vec, dofs_p, d_vec, dofs_d)
-    # print("pvec", p_vec)
-
+    
     dofs_d = dofs_d.tolist()
     dofs_p = dofs_p.tolist()
     
-    # print("dofs d", dofs_d,"\ndofs p", dofs_p)
     # --------------------------------------------   
 
     if primal_dual_flag == "primal":
-
-        # BTp = B[:,dofs_p].trans()
-        # BTd = B[:,dofs_d].trans()
 
         n_dofs_d = len( dofs_d )
         n_dofs_p = len( dofs_p )
@@ -150,14 +137,25 @@ def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_fl
     # cone set
     cvxdims = {'l': 0, 'q': [4]*nelem , 's': []}
 
+    print("call to CVXOPT:")
     solu = solvers.coneqp( cvxP, cvxq, cvxG, cvxh, cvxdims, cvxA, cvxb )   
 
-    y = solu['y']
     x = solu['x']
+    y = solu['y']
     s = solu['s']
     z = solu['z']
 
-    if primal_dual_flag == "dual":
+    #
+    if primal_dual_flag == "primal":
+        cs = x[0:nelem]
+        nodes_def = np.reshape( x[(nelem):(nelem+3*nnodes)], (nnodes,3))
+        normal_forces = 0.0
+        reactions = -y
+        normal_forces = np.zeros( (nelem, 1))
+        for j in range(nelem):
+            normal_forces[j] = np.linalg.norm( y[j*3:(j+1)*3])
+    #
+    elif primal_dual_flag == "dual":
         qs = x[0:nelem]
         vs = x[(nelem):(nelem+3*nelem)]
         nodes_def = np.zeros( (nnodes*3,1 ))
@@ -166,14 +164,9 @@ def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_fl
         nodes_def = np.reshape(nodes_def, (nnodes,3))
         normal_forces = (np.array(qs))
         normal_forces = np.reshape(normal_forces, (nelem,1))
-    elif primal_dual_flag == "primal":
-        cs = x[0:nelem]
-        nodes_def = np.reshape( x[(nelem):(nelem+3*nnodes)], (nnodes,3))
-        normal_forces = np.zeros( (nelem,1 ))
-        for j in range(nelem):
-            normal_forces[j] = np.linalg.norm( y[(j*3+0):(j*3+3)])
-
-    return nodes_def, normal_forces
+        reactions = 0.0
+    
+    return nodes_def, normal_forces, reactions
 
 # 
 # 
