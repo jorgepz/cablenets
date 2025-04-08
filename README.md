@@ -4,7 +4,7 @@
 
 _cablenets_ is a tiny python module for solving structural cable nets analysis problems using [Convex Optimization](https://en.wikipedia.org/wiki/Convex_optimization) formulations, in particular [CVXOPT](https://cvxopt.org/) Python library.
 
-The solver implements an optimization formulation presented in [this paper](https://doi.org/10.1016/S0020-7683(03)00215-4), published in the International Journal of Solids and Structures.
+The solver implements optimization formulations presented in [this paper](https://doi.org/10.1016/S0020-7683(03)00215-4) and [this book](https://www.routledge.com/Nonsmooth-Mechanics-and-Convex-Optimization/Kanno/p/book/9781420094237) by Yoshihiro Kanno.
 
 ![image saddle net](https://github.com/jorgepz/cablenets/blob/main/docs/assets/saddle_net.png?raw=true)
 
@@ -15,6 +15,7 @@ You can install `cablenets` and its dependencies using `pip` with this command:
 ```
 pip install git+https://github.com/jorgepz/cablenets.git#egg=cablenets
 ```
+You may need to use `pipx` instead of `pip`.
 
 ## Using :muscle:
 
