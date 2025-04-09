@@ -1,6 +1,9 @@
 # cablenets: A Python Module for Structural Cable Nets Analysis
 
 [![codecov](https://codecov.io/gh/jorgepz/cablenets/graph/badge.svg?token=4HE7F6GB1Y)](https://codecov.io/gh/jorgepz/cablenets)
+![License](https://img.shields.io/github/license/jorgepz/cablenets)
+[![Release](https://img.shields.io/github/v/release/jorgepz/cablenets?color=yellow&include_prereleases)](https://github.com/jorgepz/cablenets/releases)
+
 
 _cablenets_ is a tiny python module for solving structural cable nets analysis problems using [Convex Optimization](https://en.wikipedia.org/wiki/Convex_optimization) formulations, in particular [CVXOPT](https://cvxopt.org/) Python library.
 
