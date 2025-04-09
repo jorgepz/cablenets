@@ -50,7 +50,7 @@ def _remove_loads_in_fixed_nodes(p_vec, dofs_p, d_vec, dofs_d):
 #
 # variables are x: [q,v,r] and s
 #
-def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_flag="primal", load_steps=1, **kwargs ):
+def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_flag="primal", **kwargs ):
 
     if "A" in kwargs:
         print(kwargs["A"])
@@ -82,7 +82,6 @@ def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_fl
     dofs_d = dofs_d.tolist()
     dofs_p = dofs_p.tolist()
 
-    load_factors = np.linspace(0.0,1.0,load_steps+1)[1:]
     # --------------------------------------------   
 
     if primal_dual_flag == "primal":
@@ -141,9 +140,7 @@ def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_fl
 
     print("call to CVXOPT:")
 
-    for factor in load_factors:
-        print("factor: ", factor)
-        solu = solvers.coneqp( cvxP, cvxq, cvxG, cvxh, cvxdims, cvxA, cvxb )   
+    solu = solvers.coneqp( cvxP, cvxq, cvxG, cvxh, cvxdims, cvxA, cvxb )   
 
     x = solu['x']
     y = solu['y']
@@ -158,7 +155,7 @@ def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_fl
         reactions = -y
         normal_forces = np.zeros( (nelem, 1))
         for j in range(nelem):
-            normal_forces[j] = np.linalg.norm( y[j*3:(j+1)*3])
+            normal_forces[j] = s[j*4]
     #
     elif primal_dual_flag == "dual":
         qs = x[0:nelem]
