@@ -1,6 +1,6 @@
 [project]
 name = "cablenets"
-version = "0.0.2"
+version = "0.0.1"
 authors = [
   { name="Jorge Pérez Zerpa", email="jorgepz@fing.edu.uy" },
 ]
