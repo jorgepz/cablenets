@@ -36,6 +36,8 @@ print(" nodes def dual", nodes_def_dua)
 print(" normal forc dual", normal_forces_dua)
 plot( nodes, connec, nodes_def_dua, normal_forces_dua, False )
 
+assert ( abs(normal_forces_pri[1]) < 1e-6) and ( abs(normal_forces_pri[0]-1)<1e-6 )
+
 def test_normal_force_primal():
     assert ( abs(normal_forces_pri[1]) < 1e-6) and ( abs(normal_forces_pri[0]-1)<1e-6 )
 

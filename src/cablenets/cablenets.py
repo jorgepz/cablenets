@@ -155,7 +155,7 @@ def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_fl
         reactions = -y
         normal_forces = np.zeros( (nelem, 1))
         for j in range(nelem):
-            normal_forces[j] = s[j*4]
+            normal_forces[j] = z[j*4]
     #
     elif primal_dual_flag == "dual":
         qs = x[0:nelem]
