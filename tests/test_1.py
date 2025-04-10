@@ -3,14 +3,17 @@
 import sys
 sys.path.append('./src')
 import numpy as np
-from cablenets import solve, plot
+import cablenets as cn
 
 # scalar parameters
-L = 2.0
-youngs = np.array([2])
-areas = np.array([1])
-nelems = 2
+L = 2.0 
+E = 2.0 # young modulus
+A = 1.0 # cross-section area
 
+linear_material = cn.Material(0, 'linear', E )
+areas = np.array([A])
+
+nelems = 2
 nodes = np.zeros((nelems+1,3))
 for i in range(nelems+1):
     nodes[i,:] = [i*L/nelems, 0.0, 0.0]
@@ -25,18 +28,25 @@ disp_mat = np.array([ [          0, 0   , 0, 0   ],
 fext_mat      = np.zeros((1,4))
 fext_mat[0,:] = [ 1, 1.0, 0.0, 0.0 ] # node fx fy fz
 
-nodes_def_pri, normal_forces_pri, reactions = solve( nodes, connec, youngs, areas, disp_mat, fext_mat, "primal" )
+# create model
+model = cn.Model(nodes, connec, [linear_material], areas, disp_mat, fext_mat )
+
+# create analysett
+analy_sett = cn.AnalySettings()
+
+# primal case
+nodes_def_pri, normal_forces_pri, reactions = cn.solve( model, analy_sett )
+
+# dual case
+analy_sett.set_pd_flag("dual")
+nodes_def_dua, normal_forces_dua, reactions = cn.solve( model, analy_sett )
 
 print(" nodes def primal", nodes_def_pri)
 print(" normal forc primal", normal_forces_pri)
 
-nodes_def_dua, normal_forces_dua, reactions = solve( nodes, connec, youngs, areas, disp_mat, fext_mat, "dual" )
-
 print(" nodes def dual", nodes_def_dua)
 print(" normal forc dual", normal_forces_dua)
-plot( nodes, connec, nodes_def_dua, normal_forces_dua, False )
-
-assert ( abs(normal_forces_pri[1]) < 1e-6) and ( abs(normal_forces_pri[0]-1)<1e-6 )
+cn.plot( nodes, connec, nodes_def_dua, normal_forces_dua, False )
 
 def test_normal_force_primal():
     assert ( abs(normal_forces_pri[1]) < 1e-6) and ( abs(normal_forces_pri[0]-1)<1e-6 )
