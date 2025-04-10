@@ -9,7 +9,7 @@ from os.path import dirname
 sys.path.append(dirname('../src/'))
 
 # import modules
-from cablenets import solve, plot
+import cablenets as cn
 import numpy as np
 from math import pi, sqrt
 
@@ -19,6 +19,10 @@ nn      = 10       # number nodes per edge
 E       = 200      # young modulus (GPa)
 d       = .01      # cross-section diameter
 gamma   = 785000*9.81/1e9 # density (kg/m3*m/s2/1e9: GN/m3)
+
+# create materials and areas vectors
+linear_material = cn.Material(0, 'linear', E )
+areas  = np.array([ pi*d**2/4 ])
 
 nc = nn-1 # number cells per edge
 
@@ -31,11 +35,6 @@ for j in range(nn):
     for i in range(nn):
         ind_node = i + j*nn
         nodes[ ind_node, :] = [i*L/nc, j*L/nc, 0.0]
-
-# young and area vectors
-youngs = np.array([ E ])
-A      = pi*d**2/4
-areas  = np.array([ A ])
 
 # connectivity matrix
 connec = np.zeros((nelems,4),dtype=int)
@@ -69,7 +68,11 @@ fext_mat  = np.zeros((nnodes,4))
 for i in range(nnodes):
     fext_mat[i,:] = [ i, 0, 0.0, -gamma*areas[0]*lref*2 ] # node fx fy fz
 
-nodes_def, normal_forces, reactions = solve( nodes, connec, youngs, areas, disp_mat, fext_mat )
+model = cn.Model(nodes, connec, [linear_material], areas, disp_mat, fext_mat )
+analy_sett = cn.AnalySettings()
 
-plot( nodes, connec, nodes_def, normal_forces )
+# solve
+nodes_def, normal_forces, reactions = cn.solve( model, analy_sett )
+
+cn.plot( nodes, connec, nodes_def, normal_forces )
 

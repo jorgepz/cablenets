@@ -35,6 +35,8 @@ from cablenets._assemblers import _assemble_B, _assemble_d_or_p_vec
 from cablenets._assemblers import _assemble_P_and_q_primal, _assemble_P_and_q_dual
 from cablenets._assemblers import _assemble_G_dual, _assemble_G_primal
 
+from cablenets._classes import Material, Model, AnalySettings
+
 def _remove_loads_in_fixed_nodes(p_vec, dofs_p, d_vec, dofs_d):
     filtered_dofs_p = dofs_p
     filtered_p_vec  = p_vec
@@ -46,11 +48,20 @@ def _remove_loads_in_fixed_nodes(p_vec, dofs_p, d_vec, dofs_d):
 
     return filtered_p_vec, filtered_dofs_p 
 
+#
+def solve( model, analy_sett, **kwargs ):
 
-#
-# variables are x: [q,v,r] and s
-#
-def solve( nodes, connec, youngs, areas, def_coord_mat, fext_mat, primal_dual_flag="primal", **kwargs ):
+    nodes = model.nodes
+    connec = model.connec
+    materials = model.materials
+    youngs = np.zeros( (len(materials)))
+    areas = model.areas
+    for ind in range(len(materials)):
+        youngs[ind] = materials[ind].E
+    def_coord_mat = model.def_coord
+    fext_mat = model.fext
+
+    primal_dual_flag = analy_sett.primal_dual
 
     if "A" in kwargs:
         print(kwargs["A"])

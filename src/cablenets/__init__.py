@@ -23,6 +23,6 @@ SOFTWARE.
 '''
 
 # load cablenets functions
-from cablenets.cablenets import solve, plot
+from cablenets.cablenets import solve, plot, Model, Material, AnalySettings
 
-__all__ = ['solve', 'plot']
+__all__ = ['solve', 'plot', 'Model', 'Material', 'AnalySettings']
