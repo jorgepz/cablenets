@@ -151,7 +151,11 @@ def solve( model, analy_sett, **kwargs ):
 
     print("call to CVXOPT:")
 
-    solu = solvers.coneqp( cvxP, cvxq, cvxG, cvxh, cvxdims, cvxA, cvxb )   
+
+    if "init" in kwargs:
+        solu = solvers.coneqp( cvxP, cvxq, cvxG, cvxh, cvxdims, cvxA, cvxb, kwargs["init"] )   
+    else:
+        solu = solvers.coneqp( cvxP, cvxq, cvxG, cvxh, cvxdims, cvxA, cvxb )   
 
     x = solu['x']
     y = solu['y']
@@ -179,7 +183,7 @@ def solve( model, analy_sett, **kwargs ):
         normal_forces = np.reshape(normal_forces, (nelem,1))
         reactions = 0.0
     
-    return nodes_def, normal_forces, reactions
+    return nodes_def, normal_forces, reactions, solu
 
 # 
 # 
@@ -205,31 +209,42 @@ def plot(nodes, connec, nodes_def, normal_forces, bool_show = True ):
 
     m = cm.ScalarMappable(norm=normali, cmap=colormap) # color
 
-    fig = plt.figure()
-    ax = fig.add_subplot( projection='3d')
+    # fig = plt.figure()
+    # ax = fig.add_subplot( projection='3d')
+    # for ele in range( nelem ):
+    #     ini_node, end_node = connec[ele, :]
+    #     ax.plot(    [nodes[ini_node,0], nodes[end_node,0]],
+    #                 [nodes[ini_node,1], nodes[end_node,1]],
+    #              zs=[nodes[ini_node,2], nodes[end_node,2]], c='lightgray',linestyle='--')
 
+    #     ax.plot(    [nodes_def[ini_node,0], nodes_def[end_node,0]],
+    #                 [nodes_def[ini_node,1], nodes_def[end_node,1]],
+    #              zs=[nodes_def[ini_node,2], nodes_def[end_node,2]], c=m.to_rgba(normal_forces[ele]))
+    # ax.axis('equal')
+    # ax.set_xlabel('x')
+    # ax.set_ylabel('y')
+    # ax.set_zlabel('z')
+    # ax.set_title('normal forces')
+    # fig.colorbar(m, ax=ax)
+
+    fig = plt.figure()
+    ax = fig.add_subplot()
     for ele in range( nelem ):
         ini_node, end_node = connec[ele, :]
-        # if ele==0:
-        #     legR='reference'
-        #     legD='deformed'
-        # else:
-        #     legR = ''
-        #     legD = ''
-
         ax.plot(    [nodes[ini_node,0], nodes[end_node,0]],
-                    [nodes[ini_node,1], nodes[end_node,1]],
-                 zs=[nodes[ini_node,2], nodes[end_node,2]], c='lightgray',linestyle='--')
+                    [nodes[ini_node,1], nodes[end_node,1]], c='lightgray',linestyle='--')
 
         ax.plot(    [nodes_def[ini_node,0], nodes_def[end_node,0]],
-                    [nodes_def[ini_node,1], nodes_def[end_node,1]],
-                 zs=[nodes_def[ini_node,2], nodes_def[end_node,2]], c=m.to_rgba(normal_forces[ele]))
-    # ax.legend()
+                    [nodes_def[ini_node,1], nodes_def[end_node,1]], c=m.to_rgba(normal_forces[ele]))
     ax.axis('equal')
     ax.set_xlabel('x')
     ax.set_ylabel('y')
-    ax.set_zlabel('z')
+    # ax.set_zlabel('z')
     ax.set_title('normal forces')
     fig.colorbar(m, ax=ax)
+
+
+
+
     if bool_show:
         plt.show()
