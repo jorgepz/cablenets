@@ -40,7 +40,7 @@ model = cn.Model(nodes, connec, [linear_material], areas, disp_mat, fext_mat )
 analy_sett = cn.AnalySettings()
 
 # solve
-nodes_def, normal_forces, reactions = cn.solve( model, analy_sett )
+nodes_def, normal_forces, reactions, solu = cn.solve( model, analy_sett )
 
 # plot
 cn.plot( nodes, connec, nodes_def, normal_forces )

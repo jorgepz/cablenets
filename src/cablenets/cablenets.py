@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
 
-# import cvx
+# import  cvx
 from cvxopt import matrix, spmatrix, spdiag, solvers, sparse
 
 # import dependencies
@@ -33,7 +33,8 @@ import matplotlib.cm as cm
 
 from cablenets._assemblers import _assemble_B, _assemble_d_or_p_vec
 from cablenets._assemblers import _assemble_P_and_q_primal, _assemble_P_and_q_dual
-from cablenets._assemblers import _assemble_G_dual, _assemble_G_primal
+from cablenets._assemblers import _assemble_G_dual, _assemble_G_and_h_primal
+from cablenets._assemblers import _assemble_A_and_b_primal
 
 from cablenets._classes import Material, Model, AnalySettings
 
@@ -54,10 +55,21 @@ def solve( model, analy_sett, **kwargs ):
     nodes = model.nodes
     connec = model.connec
     materials = model.materials
-    youngs = np.zeros( (len(materials)))
     areas = model.areas
+    youngs = np.zeros( (len(materials)))
+    youngs_p = np.zeros( (len(materials)))
+    cys = np.zeros( (len(materials)))
+    qys = np.zeros( (len(materials)))
     for ind in range(len(materials)):
         youngs[ind] = materials[ind].E
+        if materials[ind].model_type == 'bilinear':
+            youngs_p[ind] = materials[ind].Ep
+            cys[ind] = materials[ind].epsy
+            qys[ind] = materials[ind].sy
+            isbil = True
+        else:
+            isbil = False
+            
     def_coord_mat = model.def_coord
     fext_mat = model.fext
 
@@ -86,7 +98,7 @@ def solve( model, analy_sett, **kwargs ):
     p_vec_zero_reactions = p_vec
 
     p_vec  = np.delete(p_vec, dofs_d)
-    dofs_p = np.delete(dofs_p,dofs_d) 
+    dofs_p = np.delete(dofs_p, dofs_d) 
     
     p_vec, dofs_p = _remove_loads_in_fixed_nodes(p_vec, dofs_p, d_vec, dofs_d)
     
@@ -100,26 +112,13 @@ def solve( model, analy_sett, **kwargs ):
         n_dofs_d = len( dofs_d )
         n_dofs_p = len( dofs_p )
 
-        cvxP, cvxq = _assemble_P_and_q_primal(nodes, connec, youngs, areas, nnodes, n_dofs_d, nelem, p_vec_zero_reactions)    
+        cvxP, cvxq = _assemble_P_and_q_primal(nodes, connec, materials, areas, nnodes, n_dofs_d, nelem, p_vec_zero_reactions, isbil)    
 
         # primary-slack equality constraints
-        cvxG = _assemble_G_primal( nnodes, nelem, B )
-        cvxh = matrix(0.0,(1,(1+3)*nelem)).trans()
+        cvxG, cvxh = _assemble_G_and_h_primal( nnodes, nelem, B, nodes, connec, isbil )
 
-        for ele in range( nelem ):
-            ele_length = np.linalg.norm( nodes[ connec[ele,3],:] - nodes[ connec[ele,2],:])
-            cvxh[ele*4+0]= ele_length
+        cvxA, cvxb = _assemble_A_and_b_primal(n_dofs_d, dofs_d, d_vec, nelem, nnodes)
 
-        vals = []
-        Is   = []
-        Js   = []
-        for ind in range(n_dofs_d):
-            Is.extend( [ ind ]         )
-            Js.extend( [ dofs_d[ind]+nelem ] )
-            vals.extend( [1.0] )
-        cvxA = spmatrix( vals, Is, Js, (n_dofs_d, nelem+3*nnodes) )
-        cvxb = matrix( [ matrix( np.array(d_vec) ) ] )
-        
         if "A" in kwargs:
             cvxA = sparse( [ [cvxA, matrix( kwargs["A"])] ])
             cvxb = matrix( [ cvxb, matrix( kwargs["b"]) ] )
@@ -132,7 +131,7 @@ def solve( model, analy_sett, **kwargs ):
         n_dofs_d = len( dofs_d )
         n_dofs_p = len( dofs_p )
 
-        cvxP, cvxq = _assemble_P_and_q_dual(nodes, connec, youngs, areas, n_dofs_d, nelem, d_vec)    
+        cvxP, cvxq = _assemble_P_and_q_dual(nodes, connec, materials, areas, n_dofs_d, nelem, d_vec, isbil)    
 
         # primary-slack equality constraints
         cvxG = _assemble_G_dual( n_dofs_d, nnodes, nelem )
@@ -151,7 +150,32 @@ def solve( model, analy_sett, **kwargs ):
 
     print("call to CVXOPT:")
 
-    solu = solvers.coneqp( cvxP, cvxq, cvxG, cvxh, cvxdims, cvxA, cvxb )   
+    solvers.options['abstol']=1e-12
+    solvers.options['reltol']=1e-12
+
+
+    if "initsol" in kwargs:
+        init_x = kwargs["initsol"]["x"]
+
+        # apply the current dirichlet conditions
+        for ind,val in enumerate(dofs_d):
+            # print("ind", ind, " val ", val)
+            init_x[nelem+val] = d_vec[ind] 
+
+        # compute new elongations
+        vecaux = B*init_x[nelem:(nelem+3*nnodes)]
+        for ele in range( nelem ):
+            ele_length = np.linalg.norm( nodes[ connec[ele,3],:] - nodes[ connec[ele,2],:])
+            init_x[ele] = np.linalg.norm( vecaux[ele*3:(ele+1)*3] ) - ele_length + 1.0e0
+
+        # update primal slack variables 
+        init_s = cvxh - cvxG*init_x 
+        init_dict = {'x': init_x, 's': init_s, 'y':kwargs["initsol"]['y'], 'z':kwargs["initsol"]['z'] }
+        
+        solu = solvers.coneqp( cvxP, cvxq, cvxG, cvxh, cvxdims, cvxA, cvxb, initvals=init_dict )   
+
+    else:
+        solu = solvers.coneqp( cvxP, cvxq, cvxG, cvxh, cvxdims, cvxA, cvxb )   
 
     x = solu['x']
     y = solu['y']
@@ -179,12 +203,12 @@ def solve( model, analy_sett, **kwargs ):
         normal_forces = np.reshape(normal_forces, (nelem,1))
         reactions = 0.0
     
-    return nodes_def, normal_forces, reactions
+    return nodes_def, normal_forces, reactions, solu
 
 # 
 # 
 #
-def plot(nodes, connec, nodes_def, normal_forces, bool_show = True ):
+def plot(nodes, connec, nodes_def, normal_forces, bool_show = True, fig_filename = "" ):
 
     # colormap = 'YlGnBu'
     colormap = 'rainbow'
@@ -205,31 +229,51 @@ def plot(nodes, connec, nodes_def, normal_forces, bool_show = True ):
 
     m = cm.ScalarMappable(norm=normali, cmap=colormap) # color
 
+    # fig = plt.figure()
+    # ax = fig.add_subplot( projection='3d')
+    # for ele in range( nelem ):
+    #     ini_node, end_node = connec[ele, :]
+    #     ax.plot(    [nodes[ini_node,0], nodes[end_node,0]],
+    #                 [nodes[ini_node,1], nodes[end_node,1]],
+    #              zs=[nodes[ini_node,2], nodes[end_node,2]], c='lightgray',linestyle='--')
+
+    #     ax.plot(    [nodes_def[ini_node,0], nodes_def[end_node,0]],
+    #                 [nodes_def[ini_node,1], nodes_def[end_node,1]],
+    #              zs=[nodes_def[ini_node,2], nodes_def[end_node,2]], c=m.to_rgba(normal_forces[ele]))
+    # ax.axis('equal')
+    # ax.set_xlabel('x')
+    # ax.set_ylabel('y')
+    # ax.set_zlabel('z')
+    # ax.set_title('normal forces')
+    # fig.colorbar(m, ax=ax)
+
+    # fig = plt.figure()
+    # ax = fig.add_subplot()
+
     fig = plt.figure()
     ax = fig.add_subplot( projection='3d')
 
     for ele in range( nelem ):
         ini_node, end_node = connec[ele, :]
-        # if ele==0:
-        #     legR='reference'
-        #     legD='deformed'
-        # else:
-        #     legR = ''
-        #     legD = ''
-
         ax.plot(    [nodes[ini_node,0], nodes[end_node,0]],
                     [nodes[ini_node,1], nodes[end_node,1]],
                  zs=[nodes[ini_node,2], nodes[end_node,2]], c='lightgray',linestyle='--')
-
+        
         ax.plot(    [nodes_def[ini_node,0], nodes_def[end_node,0]],
                     [nodes_def[ini_node,1], nodes_def[end_node,1]],
                  zs=[nodes_def[ini_node,2], nodes_def[end_node,2]], c=m.to_rgba(normal_forces[ele]))
-    # ax.legend()
+
+        # ax.plot(    [nodes_def[ini_node,0], nodes_def[end_node,0]],
+        #             [nodes_def[ini_node,1], nodes_def[end_node,1]], c=m.to_rgba(normal_forces[ele]))
     ax.axis('equal')
     ax.set_xlabel('x')
     ax.set_ylabel('y')
     ax.set_zlabel('z')
     ax.set_title('normal forces')
     fig.colorbar(m, ax=ax)
+
+    if len(fig_filename):
+        plt.savefig( fig_filename)
+
     if bool_show:
         plt.show()

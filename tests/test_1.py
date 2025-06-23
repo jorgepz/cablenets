@@ -35,11 +35,11 @@ model = cn.Model(nodes, connec, [linear_material], areas, disp_mat, fext_mat )
 analy_sett = cn.AnalySettings()
 
 # primal case
-nodes_def_pri, normal_forces_pri, reactions = cn.solve( model, analy_sett )
+nodes_def_pri, normal_forces_pri, reactions, solu = cn.solve( model, analy_sett )
 
 # dual case
 analy_sett.set_pd_flag("dual")
-nodes_def_dua, normal_forces_dua, reactions = cn.solve( model, analy_sett )
+nodes_def_dua, normal_forces_dua, reactions, solu = cn.solve( model, analy_sett )
 
 print(" nodes def primal", nodes_def_pri)
 print(" normal forc primal", normal_forces_pri)

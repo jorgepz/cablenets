@@ -34,7 +34,7 @@ fext_mat[0,:] = [ 2, 0.0, 0.0, 0.0 ] # node fx fy fz
 model = cn.Model(nodes, connec, [linear_material], areas, disp_mat, fext_mat )
 analy_sett = cn.AnalySettings()
 
-nodes_def, normal_forces, reactions = cn.solve( model, analy_sett )
+nodes_def, normal_forces, reactions, solu = cn.solve( model, analy_sett )
 
 print(nodes_def)
 print(normal_forces)
