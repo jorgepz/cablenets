@@ -1,9 +1,16 @@
 
 class Material:
-    def __init__(self, num_label, model_type, Eval, sy=[], epsy=[], Ep=[]):
+    def __init__(self, num_label, model_type, Eval, Ep=[], epsy=[] ):
         self.label = num_label
         if model_type=='linear':
             self.E = Eval
+            self.model_type = 'linear'
+        elif model_type=='bilinear':
+            self.E = Eval
+            self.Ep = Ep
+            self.epsy = epsy
+            self.sy = Eval*epsy
+            self.model_type = 'bilinear'
 
 class Model:
     def __init__(self, nodes_coord_mat, elem_connec_mat, materials_list, areas_vec, def_coord_mat, fext_mat ):
